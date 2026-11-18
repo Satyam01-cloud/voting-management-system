@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voter Dashboard - Voting Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            margin-bottom: 24px;
+        }
+        .election-card {
+            background: #1e293b;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+        .election-card h3 {
+            color: #38bdf8;
+            margin-bottom: 8px;
+        }
+        .candidate-list {
+            margin-top: 15px;
+        }
+        .candidate-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #475569;
+        }
+        .vote-btn {
+            background: #22c55e;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .vote-btn:hover {
+            background: #16a34a;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header-bar">
+            <div>
+                <h2>Welcome, <span id="userName">Voter</span></h2>
+                <p style="color: #94a3b8; font-size: 14px;">Voter ID: <span id="displayVoterId">---</span></p>
+            </div>
+            <div>
+                <a href="results.html" style="color: #38bdf8; margin-right: 20px; text-decoration: none;">View Results</a>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <h1>Active Elections</h1>
+        <div id="electionsList">
+            <p style="color: #94a3b8;">Loading elections...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const voterName = localStorage.getItem('voterName') || 'Voter';
+            const voterId = localStorage.getItem('voterId') || '12345';
+            
+            document.getElementById('userName').textContent = voterName;
+            document.getElementById('displayVoterId').textContent = voterId;
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = '/index.html';
+            });
+
+            try {
+                // Fetch Elections and Candidates
+                const [elecRes, candRes] = await Promise.all([
+                    fetch('/api/elections'),
+                    fetch('/api/candidates')
+                ]);
+                const elections = await elecRes.json();
+                const candidates = await candRes.json();
+
+                const container = document.getElementById('electionsList');
+                container.innerHTML = '';
+
+                if (elections.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8;">No active elections found.</p>';
+                    return;
+                }
+
+                elections.forEach(elec => {
+                    const elecCandidates = candidates.filter(c => c.electionId === elec.electionId);
+                    
+                    let card = document.createElement('div');
+                    card.className = 'election-card';
+                    card.innerHTML = `
+                        <h3>${elec.electionTitle}</h3>
+                        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 15px;">Status: <span style="color: #22c55e;">${elec.electionStatus}</span></p>
+                        <div class="candidate-list">
+                            <h4 style="font-size: 15px; margin-bottom: 10px; color: #cbd5e1;">Candidates:</h4>
+                            ${elecCandidates.length === 0 ? '<p style="color: #64748b; font-size: 14px;">No candidates listed yet.</p>' : ''}
+                            ${elecCandidates.map(c => `
+                                <div class="candidate-item">
+                                    <div>
+                                        <strong>${c.candidateName}</strong> <span style="color: #38bdf8; font-size: 13px;">(${c.partyName})</span>
+                                        <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">${c.description}</div>
+                                    </div>
+                                    <button class="vote-btn" onclick="castVote('${elec.electionId}', '${c.candidateId}')">Vote</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById('electionsList').innerHTML = '<p style="color: #ef4444;">Failed to load elections.</p>';
+            }
+        });
+
+        async function castVote(electionId, candidateId) {
+            const voterId = localStorage.getItem('voterId');
+            if (!voterId) {
+                alert('Session expired. Please login again.');
+                window.location.href = '/index.html';
+                return;
+            }
+
+            if (!confirm('Are you sure you want to cast your vote for this candidate? This action cannot be undone.')) return;
+
+            try {
+                const response = await fetch('/api/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterId, electionId, candidateId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Vote cast successfully!');
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to cast vote.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while voting.');
+            }
+        }
+    </script>
+</body>
+</html>

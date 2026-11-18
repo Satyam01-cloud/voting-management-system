@@ -1,0 +1,7 @@
+C001|SATYAM PANDEY|Progressive Party|E001|Championing youth empowerment, modern tech infrastructure, and digital governance.|images/SATYAM.png
+C002|PRAYAG KUMAR|Democratic Alliance|E001|Focused on sustainable agricultural reforms and rural economic development.|images/Prayag.png
+C003|SHUBHAM SINGH|People's Front|E001|Advocating for transparent public administration, employment generation, and education.|images/subham.jpg
+C004|SUDHA SINGH|Unity Coalition|E001|Dedicated to healthcare reform, women's empowerment, and community welfare programs.|images/sudha.jpg
+C005|JIMMY DONALDSON|Creator Party|E001|Pioneering large-scale philanthropic projects, innovation, and digital engagement.|images/jimmy.png
+C006|DJ ALOK|Vibe Movement|E001|Promoting youth culture, performing arts, and community unity through music.|images/alok.jpg
+C007|DONALD TRUMP|America First Party|E001|Focused on robust economic growth, deregulation, and strong national leadership.|images/trump.jpg
